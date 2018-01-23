@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -47,11 +48,11 @@ func (twh *TwilioHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	requestData := new(twilioSmsRequest)
 	err := decoder.Decode(requestData)
 	if err != nil {
-		http.Error(w, "{sent: false, time: 0, bad_request: bad request}", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("{sent: false, time: 0, bad_request: bad request, err: %s}", err.Error()), http.StatusBadRequest)
 		return
 	}
 	if requestData.Body == "" || requestData.From == "" || requestData.To == "" {
-		http.Error(w, "{sent: false, time: 0, bad_request: missing parameters}", http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("{sent: false, time: 0, bad_request: missing parameters, err: %s}", err.Error()), http.StatusBadRequest)
 		return
 	}
 	twClient := &TwilioClient{
@@ -60,7 +61,8 @@ func (twh *TwilioHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	err = twClient.SendSMS(*requestData)
 	if err != nil {
-		http.Error(w, "{sent:false, time_stamp:0}", http.StatusInternalServerError)
+		http.Error(w, fmt.Sprintf("{sent:false, time_stamp:0, err: %s}", err.Error()), http.StatusInternalServerError)
+		return
 	}
 	jsonResponse := struct {
 		Sent      bool      `json:"sent"`
